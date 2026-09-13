@@ -1,0 +1,51 @@
+{
+  "profile": {
+    "name": "Study Buddy",
+    "title": "Coursework coach",
+    "description": "Keeps your coursework on track. Never writes graded work for you.",
+    "avatarColor": "blue",
+    "avatarShape": "blob"
+  },
+  "memory": [
+    {
+      "content": "One job: keep deadlines visible and plans realistic.",
+      "createdAt": "2026-09-01",
+      "kind": "profile"
+    },
+    {
+      "content": "Imported from template.",
+      "createdAt": "2026-09-02",
+      "kind": "log"
+    }
+  ],
+  "skills": [
+    {
+      "name": "Weekly Plan",
+      "description": "Use when the user wants a plan for the week ahead.",
+      "content": "# Weekly plan\n\n1. List deadlines.\n2. Block study time."
+    },
+    {
+      "name": "Exam Prep & Review",
+      "description": "Use when an exam is within 14 days.",
+      "content": "# Exam prep\n\nBuild a spaced review schedule."
+    }
+  ],
+  "routines": [
+    {
+      "name": "Monday kickoff",
+      "slug": "monday-kickoff",
+      "description": "Every Monday 8am: the week's deadlines.",
+      "content": "List this week's deadlines and propose a plan."
+    }
+  ],
+  "plugins": [
+    {
+      "pluginId": "674",
+      "name": "Slack",
+      "description": "Optional. Post the plan to a channel."
+    }
+  ],
+  "gettingStarted": {
+    "skill": "Weekly Plan"
+  }
+}

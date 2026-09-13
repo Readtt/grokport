@@ -1,0 +1,48 @@
+{
+  "name": "grokport",
+  "version": "0.1.0",
+  "description": "Paste a Grok Bot link to add that bot to Claude Code, Codex, Cursor, OpenCode and other coding agents.",
+  "keywords": [
+    "grok",
+    "grok-bot",
+    "claude-code",
+    "codex",
+    "cursor",
+    "gemini-cli",
+    "opencode",
+    "github-copilot",
+    "agent-skills",
+    "skills",
+    "cli"
+  ],
+  "homepage": "https://github.com/Readtt/grokport#readme",
+  "bugs": {
+    "url": "https://github.com/Readtt/grokport/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Readtt/grokport.git"
+  },
+  "license": "MIT",
+  "author": "Mudasir Ahmed (https://github.com/Readtt)",
+  "type": "module",
+  "bin": {
+    "grokport": "bin/grokport.js"
+  },
+  "files": [
+    "bin",
+    "docs",
+    "src"
+  ],
+  "engines": {
+    "node": ">=20.12"
+  },
+  "scripts": {
+    "start": "node bin/grokport.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.8.0",
+    "picocolors": "^1.1.1"
+  }
+}

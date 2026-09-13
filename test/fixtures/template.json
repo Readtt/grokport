@@ -1,0 +1,16 @@
+{
+  "template": {
+    "shareId": "AbCdEfGhIjKlMnOpQrStU",
+    "name": "Study Buddy",
+    "avatarShape": "blob",
+    "avatarColor": "blue",
+    "createdAtMs": "1789066301928",
+    "updatedAtMs": "1789110139728",
+    "blobObjectKey": "templates/AbCdEfGhIjKlMnOpQrStU_v3.json",
+    "published": true,
+    "activeVersion": 3,
+    "description": "Keeps your coursework on track: deadlines, weekly plans, and exam prep.",
+    "ownerType": "GROK_BOT_TEMPLATE_OWNER_TYPE_USER"
+  },
+  "ownerDisplayName": "Ada"
+}

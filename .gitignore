@@ -1,0 +1,21 @@
+# dependencies
+node_modules/
+
+# build / packaging output
+*.tgz
+coverage/
+
+# logs
+*.log
+npm-debug.log*
+
+# env files
+.env
+.env.*
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# personal Claude Code settings
+.claude/settings.local.json
