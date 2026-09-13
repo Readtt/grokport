@@ -1,4 +1,4 @@
-import { slugify, uniqueSlugs } from '../slug.js';
+import { botSlug, uniqueSlugs } from '../slug.js';
 import { cleanText } from '../text.js';
 import { formatChanged } from './errors.js';
 
@@ -42,7 +42,7 @@ export function toBot(preview, recipe) {
     id: template.shareId,
     url: `https://x.ai/bot/${template.shareId}`,
     name,
-    slug: slugify(name, 'grok-bot'),
+    slug: botSlug(name),
     author: cleanText(preview.ownerDisplayName ?? '') || undefined,
     color: profile.avatarColor ?? template.avatarColor,
     description: cleanText(template.description ?? '') || instructions,

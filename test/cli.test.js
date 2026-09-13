@@ -150,3 +150,37 @@ test('exits with an error when one of the chosen agents could not be installed',
     assert.equal(code, 1, output);
     assert.ok(existsSync(join(cwd, 'study-buddy', 'SKILL.md')), output);
   }));
+
+test('removes an installed bot from every agent, but not a copy saved in a folder', () =>
+  withFakeGrokBot({}, async (api, { home, cwd }) => {
+    const installed = await runGrokport([LINK, '--to', 'claude,codex,folder', '-y'], { api, home, cwd });
+    assert.equal(installed.code, 0, installed.output);
+    const requestsBeforeRemove = api.requests.length;
+
+    const { code, output } = await runGrokport(['remove', 'study-buddy', '-y'], { api, home, cwd });
+
+    assert.equal(code, 0, output);
+    for (const path of [
+      join(home, '.claude', 'skills', 'study-buddy'),
+      join(home, '.agents', 'skills', 'study-buddy'),
+      join(home, '.claude', 'agents', 'study-buddy.md'),
+    ]) {
+      assert.equal(existsSync(path), false, `${path}\n${output}`);
+    }
+    assert.ok(existsSync(join(cwd, 'study-buddy', 'SKILL.md')), output);
+    assert.equal(api.requests.length, requestsBeforeRemove, 'remove never talks to Grok Bot');
+  }));
+
+test('without a terminal, remove deletes nothing unless you name the bot and add -y', () =>
+  withFakeGrokBot({}, async (api, { home, cwd }) => {
+    const installed = await runGrokport([LINK, '--to', 'claude', '-y'], { api, home, cwd });
+    assert.equal(installed.code, 0, installed.output);
+
+    for (const args of [['remove', 'study-buddy'], ['remove', '-y'], ['remove']]) {
+      const { code, output } = await runGrokport(args, { api, home, cwd });
+      assert.equal(code, 1, `${args.join(' ')}\n${output}`);
+      assert.match(output, /-y/, args.join(' '));
+      assert.doesNotMatch(output, /--to/, `remove has no --to, so it must not suggest it\n${output}`);
+    }
+    assert.ok(existsSync(join(home, '.claude', 'skills', 'study-buddy', 'SKILL.md')));
+  }));

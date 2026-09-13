@@ -10,6 +10,7 @@ import { parseShareId } from './grok/link.js';
 import { FOLDER_TARGET, HARNESSES, checkTargets, detectHarnesses, planInstall } from './harnesses.js';
 import { applyPlan } from './install.js';
 import { openUrl } from './open-url.js';
+import { findBot, findInstalled, removeBot } from './remove.js';
 import { cleanText } from './text.js';
 
 const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
@@ -38,6 +39,9 @@ export async function main(argv) {
         await signIn();
         p.outro('Signed in. Privately shared bots will work now.');
         return 0;
+      case 'remove':
+        p.intro(title());
+        return (await remove(args)) ? 0 : 1;
       default:
         p.intro(title());
         return (await install(args)) ? 0 : 1;
@@ -158,6 +162,64 @@ function report(bot, ids, results) {
     p.outro(pc.yellow('Installed where possible. Fix the warnings above, then run grokport again for the rest.'));
   } else {
     p.outro(`Ready! Restart any agent that was already open, then say hi to ${paint(bot.color, bot.name)}.`);
+  }
+  return !failed;
+}
+
+/** @returns {Promise<boolean>} true when nothing failed */
+async function remove({ bot: wanted, yes }) {
+  if (!isInteractive() && (!wanted || !yes)) {
+    throw new GrokError(
+      'usage',
+      "grokport can't ask you questions here because this isn't a terminal. Name the bot and add -y, like " +
+        'npx grokport remove overheard -y.',
+    );
+  }
+
+  const bots = await findInstalled(homedir());
+  if (!wanted && bots.length === 0) {
+    p.outro("grokport hasn't added any bots to your agents, so there's nothing to remove.");
+    return true;
+  }
+  const bot = wanted ? findBot(bots, wanted) : await chooseBot(bots);
+  p.note(removalSummary(bot), pc.bold(bot.name));
+
+  const confirmed = yes || (await ask(() => p.confirm({ message: `Remove ${bot.name} from every agent?` })));
+  if (!confirmed) throw new Cancelled();
+  return reportRemoval(bot, await removeBot(bot));
+}
+
+function chooseBot(bots) {
+  return ask(() =>
+    p.select({
+      message: 'Which bot should grokport remove?',
+      options: bots.map((bot) => ({ value: bot, label: bot.name, hint: bot.source })),
+    }),
+  );
+}
+
+function removalSummary(bot) {
+  const lines = bot.items.map((item) => tildify(item.path));
+  if (bot.items.some((item) => item.kind === 'bundle')) {
+    lines.push('', pc.dim('Files you added to these folders stay.'));
+  }
+  return lines.join('\n');
+}
+
+/** Prints what happened to each copy of the bot. Returns true when nothing failed. */
+function reportRemoval(bot, results) {
+  for (const { item } of results.filter((r) => r.ok && r.kept)) {
+    p.log.info(`Kept ${tildify(item.path)} because it has files you added.`);
+  }
+  for (const { error } of results.filter((r) => !r.ok)) p.log.warn(tildify(error.message));
+
+  const failed = results.some((r) => !r.ok);
+  if (!results.some((r) => r.ok)) {
+    p.outro(pc.red('Nothing was removed.'));
+  } else if (failed) {
+    p.outro(pc.yellow('Removed where possible. Fix the warnings above, then run grokport remove again.'));
+  } else {
+    p.outro(`Removed ${bot.name}. Restart any agent that was already open.`);
   }
   return !failed;
 }
@@ -328,6 +390,8 @@ ${pc.bold('grokport')}  add a Grok Bot to your coding agents
 ${pc.bold('Usage')}
   npx grokport <link>                  add a bot (asks where to put it)
   npx grokport <link> --to claude -y   add a bot without asking anything
+  npx grokport remove                  pick a bot to remove from every agent
+  npx grokport remove <name> -y        remove a bot without asking anything
   npx grokport login                   sign in (only needed for private bots)
   npx grokport logout                  sign out
 
@@ -342,7 +406,8 @@ ${pc.bold('Agents')}
   ${ids}
   (folder puts a copy in the current folder)
 
-${pc.bold('Example')}
+${pc.bold('Examples')}
   npx grokport https://x.ai/bot/NIEguoGUjA648fUPle8F5
+  npx grokport remove overheard
 `;
 }

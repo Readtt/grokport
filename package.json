@@ -1,6 +1,6 @@
 {
   "name": "grokport",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Paste a Grok Bot link to add that bot to Claude Code, Codex, Cursor, OpenCode and other coding agents.",
   "keywords": [
     "grok",

@@ -13,6 +13,11 @@ export function slugify(text, fallback) {
   return slug || fallback;
 }
 
+/** The name grokport gives a bot's skill folder and persona file: "Exam Prep" -> "exam-prep". */
+export function botSlug(name) {
+  return slugify(name, 'grok-bot');
+}
+
 /** Slugs for a list of names, numbered so no two collide ("plan", "plan-2"). */
 export function uniqueSlugs(names, fallbackPrefix) {
   const taken = new Set();

@@ -10,6 +10,9 @@ skill folder   ->  src/harnesses.js   work out where each chosen agent looks for
 install plan   ->  src/install.js     write the files, but never over files grokport didn't make
 ```
 
+`npx grokport remove` goes the other way: `src/remove.js` finds what `src/install.js` wrote and
+deletes only that.
+
 | If you see this                                      | Look here                                         |
 | ---------------------------------------------------- | ------------------------------------------------- |
 | "doesn't look like a Grok Bot link"                  | `src/grok/link.js`                                |
@@ -19,6 +22,7 @@ install plan   ->  src/install.js     write the files, but never over files grok
 | "Couldn't reach Grok Bot"                            | its `Details:` line, then `src/grok/endpoints.js` |
 | sign-in never ends, or Grok Bot says no to the token | `src/grok/auth.js`                                |
 | an agent stops finding a bot you installed           | `src/harnesses.js`                                |
+| `grokport remove` doesn't list a bot you installed   | `src/remove.js`                                   |
 | you want SKILL.md to say something else              | `src/bundle.js`                                   |
 
 ## Where Grok Bot keeps a bot
@@ -105,7 +109,7 @@ do:
 grokport saves the tokens in `~/.grokport/auth.json` (mode 600, so only your user can read it) and
 only ever sends them to `api2.cursor.sh`. `npx grokport logout` deletes the file.
 
-## How updates keep your files
+## How updating and removing keep your files
 
 Every file grokport writes ends with a note that names the bot it came from:
 
@@ -117,6 +121,24 @@ Every file grokport writes ends with a note that names the bot it came from:
 When you install again, grokport deletes only those files and then writes the new ones, so anything
 you added to the folder stays. If a file has no note, or its note names a different bot, grokport
 leaves it alone and says so. `src/bundle.js` owns this format and `src/install.js` uses it.
+
+`npx grokport remove` finds bots by that same note. `src/remove.js` looks at every skill folder and
+agent file in the folders that `src/harnesses.js` lists, and groups what it finds by the bot's link.
+The bot's name comes from the title in `SKILL.md`. A skill folder only counts when its name matches
+that title (Study Buddy lives in `study-buddy`), so a copy under another name is left alone. It skips
+a bot folder that is a link. When one agent's skills folder is a link to another's, it counts the
+bot's folder once.
+
+Right before it deletes anything, it reads the note again. In a skill folder it deletes the files on
+the list and then `SKILL.md`. After that it removes the `skills` and `routines` folders and the bot's
+folder, but only the ones that are empty, so a folder that still holds files you added stays.
+`SKILL.md` goes last so that if something fails halfway, the note is still there and running remove
+again finishes the job. Copies saved with **Save a copy here** can be anywhere, so remove never looks
+for them.
+
+Adding the bot again after that still works. `src/install.js` writes into a real folder (not a link)
+that has no note, as long as none of the bot's files are in it yet, so it never writes over a file it
+didn't make.
 
 ## Testing without Grok Bot
 

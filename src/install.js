@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { lstat, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { readGenerated } from './bundle.js';
 import { GrokError } from './grok/errors.js';
@@ -50,8 +50,14 @@ async function attempt(write) {
 async function updateFolder({ path, files, source }) {
   if (existsSync(path)) {
     const previous = readGenerated(await readText(join(path, 'SKILL.md')));
-    assertSameBot(previous, source, path);
-    for (const file of previous.files) await rm(join(path, file), { force: true });
+    // A real folder (not a link) that holds none of the bot's files is safe to write into, like one
+    // `grokport remove` kept because the user had added files to it.
+    const isRealFolder = (await lstat(path)).isDirectory();
+    const holdsBotFiles = Object.keys(files).some((file) => existsSync(join(path, file)));
+    if (previous || holdsBotFiles || !isRealFolder) {
+      assertSameBot(previous, source, path);
+      for (const file of previous.files) await rm(join(path, file), { force: true });
+    }
   }
   for (const [relative, content] of Object.entries(files)) {
     const file = join(path, relative);

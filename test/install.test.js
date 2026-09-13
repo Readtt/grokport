@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { renderBundle } from '../src/bundle.js';
@@ -76,6 +76,35 @@ test("leaves alone a folder that grokport didn't create", async () => {
   assert.equal(result.ok, false);
   assert.equal(result.error.code, 'exists');
   assert.equal(await readFile(join(path, 'SKILL.md'), 'utf8'), '---\nname: study-buddy\n---\nMy own skill.\n');
+});
+
+test("won't write into a folder without grokport's note when one of the bot's files is already there", async () => {
+  const path = join(await tempDir(), 'study-buddy');
+  await mkdir(join(path, 'skills'), { recursive: true });
+  await writeFile(join(path, 'skills', 'weekly-plan.md'), 'my own plan\n');
+
+  const [result] = await applyPlan([bundleAt(path)]);
+
+  assert.equal(result.ok, false);
+  assert.equal(result.error.code, 'exists');
+  assert.equal(await readFile(join(path, 'skills', 'weekly-plan.md'), 'utf8'), 'my own plan\n');
+  assert.equal(existsSync(join(path, 'SKILL.md')), false);
+});
+
+test("won't write through a link into a folder grokport didn't make", async () => {
+  const dir = await tempDir();
+  const project = join(dir, 'my-project');
+  await mkdir(project);
+  await writeFile(join(project, 'notes.md'), 'notes\n');
+  const path = join(dir, 'skills', 'study-buddy');
+  await mkdir(dirname(path), { recursive: true });
+  await symlink(project, path, 'junction');
+
+  const [result] = await applyPlan([bundleAt(path)]);
+
+  assert.equal(result.ok, false);
+  assert.equal(result.error.code, 'exists');
+  assert.equal(existsSync(join(project, 'SKILL.md')), false);
 });
 
 test("won't replace a different bot that has the same name", async () => {

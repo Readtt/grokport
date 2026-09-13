@@ -52,6 +52,19 @@ computer, or saves a copy here if it finds none.
 Run the same command again. To make sure you also have the newest grokport, run
 `npx grokport@latest <link>`.
 
+### Remove a bot
+
+```sh
+npx grokport remove overheard
+```
+
+Use the bot's name or its link. Run `npx grokport remove` on its own to pick from the bots grokport
+added. grokport shows you what it will delete and asks first. Add `-y` to skip that question.
+
+grokport removes the bot from all your agents at once. Some agents read the same skill folder, so it
+can't take a bot out of just one of them. That's why `--to` doesn't work with `remove`. Restart any
+agent that was already open.
+
 ## Private bots need a sign-in
 
 Bots in the Grok Bot marketplace work without an account. Other bots are shared privately, by link,
@@ -104,6 +117,11 @@ same name. In both cases it leaves the file alone and tells you.
 When you update a bot, grokport replaces the files it made last time, so any changes you made to
 those files are lost. Files you added to the folder yourself are kept.
 
+Removing a bot works the same way. grokport only deletes the files it made for that bot. Files you
+added stay, and so does the folder they're in. If you add the bot again later, its files go back into
+that folder next to yours. grokport also leaves copies alone, both a copy you saved with **Save a copy
+here** and a bot folder you copied under another name. Delete those yourself if you don't want them.
+
 ## How it works
 
 Grok Bot doesn't offer an official way for other apps to get bots. grokport asks Grok Bot's servers
@@ -130,6 +148,7 @@ src/grok/          talks to Grok Bot: reads links, downloads bots, signs in
 src/bundle.js      turns a bot into a skill folder
 src/harnesses.js   where each agent looks for skills
 src/install.js     writes the files, but only over its own
+src/remove.js      removes a bot, but only the files it made
 src/cli.js         the command you run (args.js and open-url.js help it)
 src/slug.js        makes names for folders and files
 src/text.js        cleans up text that other people wrote

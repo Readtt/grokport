@@ -11,7 +11,8 @@ const SHARED_SKILLS = '.agents/skills'; // the cross-agent Agent Skills folder
  *
  *   configDir   exists when the agent is installed
  *   skillDirs   every folder the agent loads skills from, its own folder first
- *   agent       optional persona file, so a whole session can run as the bot
+ *   agentDir    optional folder for a persona file (<bot>.md), so a whole session can run as the bot
+ *   agent       what goes in that persona file
  *   usage       how to start the bot's skill
  *   agentUsage  how to start the persona, when there is one
  */
@@ -21,6 +22,7 @@ export const HARNESSES = [
     name: 'Claude Code',
     configDir: '.claude',
     skillDirs: ['.claude/skills'],
+    agentDir: '.claude/agents',
     agent: claudeAgent,
     usage: (bot) => `/${bot.slug}`,
     agentUsage: (bot) => `claude --agent ${bot.slug}`,
@@ -51,6 +53,7 @@ export const HARNESSES = [
     name: 'OpenCode',
     configDir: '.config/opencode',
     skillDirs: ['.config/opencode/skills', '.claude/skills', SHARED_SKILLS],
+    agentDir: '.config/opencode/agents',
     agent: opencodeAgent,
     usage: (bot) => `ask for ${bot.name}`,
     agentUsage: (bot) => `opencode --agent ${bot.slug}`,
@@ -70,6 +73,10 @@ export const HARNESSES = [
     usage: (bot) => `/${bot.slug}`,
   },
 ];
+
+/** Every folder grokport installs into, relative to the home folder. `grokport remove` looks in these. */
+export const SKILL_DIRS = [...new Set(HARNESSES.flatMap((harness) => harness.skillDirs))];
+export const AGENT_DIRS = HARNESSES.filter((harness) => harness.agentDir).map((harness) => harness.agentDir);
 
 /** Not an agent: just saves the skill folder where grokport was run. */
 export const FOLDER_TARGET = { id: 'folder', name: 'Save a copy here', usage: (bot) => `./${bot.slug}` };
@@ -108,9 +115,9 @@ export function planInstall(bot, ids, { home, cwd }) {
     harnesses: readers.map((harness) => harness.id),
   }));
 
-  for (const harness of selected.filter((h) => h.agent)) {
-    const { path, content } = harness.agent(bot);
-    plan.push({ kind: 'file', path: join(home, path), content, source, harnesses: [harness.id] });
+  for (const harness of selected.filter((h) => h.agentDir)) {
+    const path = join(home, harness.agentDir, `${bot.slug}.md`);
+    plan.push({ kind: 'file', path, content: harness.agent(bot), source, harnesses: [harness.id] });
   }
   if (ids.includes(FOLDER_TARGET.id)) {
     plan.push({ kind: 'bundle', path: join(cwd, bot.slug), files, source, harnesses: [FOLDER_TARGET.id] });
@@ -154,27 +161,21 @@ function isLower(a, b) {
 }
 
 function claudeAgent(bot) {
-  return {
-    path: `.claude/agents/${bot.slug}.md`,
-    content: agentFile(
-      bot,
-      { name: bot.slug, description: describeBot(bot), skills: [bot.slug] },
-      `You are ${bot.name}. Your instructions, playbooks, routines and memory are in the ${bot.slug} ` +
-        'skill, which is loaded for you. Follow it in everything you do.',
-    ),
-  };
+  return agentFile(
+    bot,
+    { name: bot.slug, description: describeBot(bot), skills: [bot.slug] },
+    `You are ${bot.name}. Your instructions, playbooks, routines and memory are in the ${bot.slug} ` +
+      'skill, which is loaded for you. Follow it in everything you do.',
+  );
 }
 
 function opencodeAgent(bot) {
-  return {
-    path: `.config/opencode/agents/${bot.slug}.md`,
-    content: agentFile(
-      bot,
-      { description: describeBot(bot), mode: 'primary' },
-      `You are ${bot.name}. Before your first reply, load the ${bot.slug} skill and follow it: it ` +
-        'holds your instructions, playbooks, routines and memory.',
-    ),
-  };
+  return agentFile(
+    bot,
+    { description: describeBot(bot), mode: 'primary' },
+    `You are ${bot.name}. Before your first reply, load the ${bot.slug} skill and follow it: it ` +
+      'holds your instructions, playbooks, routines and memory.',
+  );
 }
 
 function agentFile(bot, frontmatter, body) {
